@@ -8,7 +8,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="manifest" id="mf" href="data:application/json,%7B%22name%22%3A%22PURITRONIC%22%2C%22display%22%3A%22standalone%22%7D">
+<link rel="manifest" id="mf" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
 <style>
 :root{--b1:#0b5ea8;--b2:#1e90d6;--b3:#7fd3f2;--b4:#e6f5fc;--navy:#14214f;--red:#d7262e;--ok:#1a9a5a;--bg:#f2f8fc;--card:#fff;--tx:#12263f;--mu:#5b7189;--bd:#cfe3f0}
 @media(prefers-color-scheme:dark){:root{--bg:#0a1626;--card:#122339;--tx:#e8f3fb;--mu:#93aec6;--bd:#223a55;--b4:#16314d}}
@@ -543,23 +544,8 @@ async function informe(share){
 }
 
 /* ===== PWA ===== */
-function iconoPNG(){
-  const c=E('canvas');c.width=c.height=512;const x=c.getContext('2d');
-  const g=x.createLinearGradient(0,0,512,512);g.addColorStop(0,'#14214f');g.addColorStop(1,'#1e90d6');x.fillStyle=g;x.fillRect(0,0,512,512);
-  x.fillStyle='#bfeaff';x.strokeStyle='#fff';x.lineWidth=10;x.beginPath();x.moveTo(256,110);x.bezierCurveTo(256,110,150,250,150,325);x.arc(256,325,106,Math.PI,0,true);x.bezierCurveTo(362,250,256,110,256,110);x.fill();x.stroke();
-  x.lineWidth=7;for(const a of[0,60,120]){x.save();x.translate(256,320);x.rotate(a*Math.PI/180);x.beginPath();x.ellipse(0,0,200,65,0,0,7);x.stroke();x.restore()}
-  return c.toDataURL('image/png');
-}
-try{
-  const ic=iconoPNG(),base=location.href.split('#')[0].split('?')[0];
-  const mf={name:'PURITRONIC — Caja y Bitácora',short_name:'PURITRONIC',start_url:base,scope:base.replace(/[^\/]*$/,''),display:'standalone',orientation:'portrait',background_color:'#0b5ea8',theme_color:'#0b5ea8',icons:[{src:ic,sizes:'512x512',type:'image/png',purpose:'any'},{src:ic,sizes:'512x512',type:'image/png',purpose:'maskable'}]};
-  $('#mf').href=URL.createObjectURL(new Blob([JSON.stringify(mf)],{type:'application/manifest+json'}));
-  const a=E('link');a.rel='apple-touch-icon';a.href=ic;document.head.append(a);
-}catch(e){}
-const SWCODE="const C='puritronic-v3';self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(['./'])).then(()=>self.skipWaiting()))});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request,{ignoreSearch:true}).then(h=>{const n=fetch(e.request).then(r=>{if(r.ok&&new URL(e.request.url).origin===location.origin){const q=r.clone();caches.open(C).then(c=>c.put(e.request,q))}return r}).catch(()=>h||caches.match('./'));return h||n}))});";
 if('serviceWorker' in navigator){
-  const via=u=>navigator.serviceWorker.register(u);
-  via(URL.createObjectURL(new Blob([SWCODE],{type:'text/javascript'}))).catch(()=>via('sw.js')).catch(()=>console.warn('Service Worker no disponible'));
+  addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(e=>console.warn('Service Worker no disponible',e)));
 }
 let ev;addEventListener('beforeinstallprompt',e=>{e.preventDefault();ev=e;$('#inst').style.display='block'});
 $('#inst').onclick=async()=>{if(!ev)return;ev.prompt();await ev.userChoice;ev=null;$('#inst').style.display='none'};
