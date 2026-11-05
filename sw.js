@@ -1,5 +1,5 @@
 /* PURITRONIC - Service Worker (offline first) */
-const CACHE = 'puritronic-v4';
+const CACHE = 'puritronic-v6';
 const ASSETS = [
   './',
   './index.html',
