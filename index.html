@@ -82,7 +82,7 @@ details.adv{margin:8px 0;border:1px dashed var(--bd);border-radius:10px;padding:
 .gal img{width:100%;display:block;aspect-ratio:4/3;object-fit:cover}.gal figcaption{padding:6px 8px;font-size:.78rem;color:var(--mu);display:flex;justify-content:space-between;gap:6px;align-items:center}
 </style>
 <style>
-.hint{display:block;color:var(--mu);margin:-4px 0 10px}.tchips{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 12px}
+small.hint{display:block;color:var(--mu)!important;margin:-4px 0 10px;font-weight:400}.tchips{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 12px}
 .qlab{font-weight:700;margin:14px 0 2px;color:var(--tx)}
 .tchips button{border:2px solid var(--bd);background:var(--card);color:var(--tx);border-radius:999px;padding:11px 15px;font:inherit;font-weight:600;cursor:pointer}
 .tchips button.on{background:var(--b2);border-color:var(--b2);color:#fff}
@@ -95,6 +95,8 @@ details.adv{margin:8px 0;border:1px dashed var(--bd);border-radius:10px;padding:
 .qok{background:var(--b2);color:#fff;border:0;border-radius:12px;padding:16px 22px;font:inherit;font-weight:800;font-size:1.1rem;cursor:pointer}.qok:disabled{opacity:.4}
 .qclr{background:transparent;border:2px solid var(--bd);color:var(--tx);border-radius:12px;width:48px;height:52px;font-size:1.1rem;cursor:pointer}
 .sellos{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0;font-size:1.5rem}.sellos span{opacity:.3}.sellos span.on{opacity:1}#lealtad input{width:100%}
+.acts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}.acts button{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px 2px;color:var(--tx);font:600 .74rem inherit;cursor:pointer}.acts button i{display:block;font-style:normal;font-size:1.7rem}.acts button:active{transform:scale(.94)}
+.meta{height:10px;border-radius:6px;background:var(--b4);overflow:hidden;margin:0 0 6px}.meta div{height:100%;width:0;background:linear-gradient(90deg,var(--b2),var(--ok));transition:width .4s}.ult span{min-width:0}
 </style></head>
 <body>
 <header>
@@ -105,7 +107,10 @@ details.adv{margin:8px 0;border:1px dashed var(--bd);border-radius:10px;padding:
 <main>
 <section id="s-ventas" class="on">
 <div class="promo" id="promo"></div>
+<div class="promo" id="bkw" style="background:var(--navy);cursor:pointer">💾 Hace más de 7 días sin respaldo. Toca para ir a Ajustes</div>
 <div class="hoy" id="hoy"></div>
+<div class="acts" id="acts"><button type="button" id="aRep"><i>🔁</i>Repetir</button><button type="button" id="aCli"><i>👥</i>Clientes</button><button type="button" id="aPro"><i>📣</i>Promo</button><button type="button" id="aMeta"><i>🎯</i>Meta</button></div>
+<div class="meta"><div id="metaF"></div></div><small id="metaT" style="display:block;color:var(--mu);margin:0 0 12px;text-align:center"></small>
 <div class="card" id="quick"><h2>Vender</h2>
 <div class="prods" id="qprods"></div>
 <div class="qlab">Precio del garrafón</div><div class="tchips" id="qtar"></div>
@@ -161,14 +166,14 @@ details.adv{margin:8px 0;border:1px dashed var(--bd);border-radius:10px;padding:
 const $=s=>document.querySelector(s);
 const LS=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch{return d}};
 const SV=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));return true}catch{toast('No se pudo guardar (almacenamiento lleno)');return false}};
-const pad=n=>String(n).padStart(2,'0');
+const pad=n=>String(n).padStart(2,'0');const NO=o=>Object.assign(Object.create(null),o);
 const ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
-const mx=n=>'$'+(Math.round(n*100)/100).toLocaleString('es-MX');
+const mx=n=>{n=Math.round(n*100)/100;return '$'+n.toLocaleString('es-MX',{minimumFractionDigits:n%1?2:0,maximumFractionDigits:2})};
 const E=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
 const ib=(t,f,l)=>{const b=E('button','ib',t);b.type='button';b.onclick=f;if(l)b.setAttribute('aria-label',l);return b};
 let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2200)}
 function dl(nombre,txt,tipo){const u=URL.createObjectURL(new Blob([txt],{type:tipo}));const a=E('a');a.href=u;a.download=nombre;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000)}
-const csvTxt=rows=>'\ufeff'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+const csvTxt=rows=>'\ufeff'+rows.map(r=>r.map(c=>'"'+(typeof c==='string'&&/^[=+\-@]/.test(c)?"'":'')+String(c).replace(/"/g,'""')+'"').join(',')).join('\r\n');
 
 /* Modal genérico: campos [{k,l,v,t,o}] */
 function modal(tit,campos,ok,del){
@@ -327,8 +332,8 @@ function pintaVentas(){
   const hf=ymd(new Date()),hv=ventas().filter(v=>v.fecha===hf),H=$('#hoy');H.textContent='';
   [[hv.length,'ventas hoy'],[mx(hv.reduce((s,v)=>s+v.total,0)),'vendido hoy'],[mx(hv.filter(v=>esEf(v.pago)).reduce((s,v)=>s+v.total,0)),'en efectivo']].forEach(([b,l])=>{const d=E('div');d.append(E('b',0,String(b)),E('small',0,l));H.append(d)});
   const U=$('#ultima');U.textContent='';const lv=hv.slice().sort((x,y)=>y.id.localeCompare(x.id))[0];
-  if(lv){const row=E('div','ult');row.append(E('span',0,'Última: '+nomV(lv)+' · '+mx(lv.total+(lv.com||0)+(lv.prop||0))+' ('+pagoN(lv.pago)+')'));
-    const ub=E('button',0,'Deshacer');ub.type='button';ub.onclick=()=>{SV('pt_ventas',ventas().filter(x=>x.id!==lv.id));toast('Venta deshecha');pintaVentas()};row.append(ub);U.append(row)}
+  if(lv){const G=lv.tk?hv.filter(x=>x.tk===lv.tk):[lv],tt=G.reduce((s,x)=>s+x.total+(x.com||0)+(x.prop||0),0),row=E('div','ult');row.append(E('span',0,'Última: '+G.map(x=>nomV(x)).join(' + ')+' · '+mx(tt)+' ('+pagoN(lv.pago)+')'));
+    const sb=E('button',0,'🧾');sb.type='button';sb.setAttribute('aria-label','Compartir ticket');sb.onclick=()=>compartir(ticketTxt(G));const ub=E('button',0,'Deshacer');ub.type='button';ub.onclick=()=>{const ids=G.map(x=>x.id);SV('pt_ventas',ventas().filter(x=>!ids.includes(x.id)));toast('Venta deshecha');pintaVentas()};row.append(sb,ub);U.append(row)}
   const L=$('#lista');L.textContent='';
   if(!a.length){L.append(E('div','empty','Sin ventas en esta fecha'));return}
   a.forEach(v=>{
@@ -385,8 +390,8 @@ function mkBit(sec){
         if(t.tipo==='c'){
           const i=E('input');i.type='checkbox';i.checked=!!v;i.onchange=()=>c.classList.toggle('done',i.checked);c.classList.toggle('done',!!v);
           ctl.append(i,E('span',0,'Cumplido'));
-          if(t.cada>1&&t.cada<30&&(+f.slice(8)-1)%t.cada===0)ctl.append(E('span','hint','· Toca hoy'));
-          if(t.cada>=30){const l=ultima(t.id,f);ctl.append(E('span','hint',l?'· Última vez: '+l:'· Sin registro previo'))}
+          if(t.cada>1){const l=ultima(t.id,f);if(!l)ctl.append(E('span','hint','· Sin registro previo'));else{const dd=Math.round((new Date(f+'T12:00')-new Date(l+'T12:00'))/864e5);ctl.append(E('span',dd>=t.cada?'warn':'hint',(dd>=t.cada?'⚠ Toca hoy · ':'· ')+'Última vez: '+l+' (hace '+dd+' d)'))}}
+          
         }else if(t.tipo==='n'){
           const i=E('input');i.type='number';i.step='any';i.inputMode='decimal';i.value=v==null?'':v;i.style.maxWidth='130px';
           const w=E('span','warn');
@@ -519,10 +524,10 @@ function pintaCfg(){
   c.append(as);
   c=card('Respaldo de datos');
   const ex=E('button','btn s','Exportar respaldo (JSON)');
-  ex.onclick=async()=>{const o={};Object.keys(localStorage).filter(k=>k.startsWith('pt_')).forEach(k=>o[k]=localStorage.getItem(k));try{o._fotos=await fAll()}catch{}dl('respaldo_puritronic_'+ymd(new Date())+'.json',JSON.stringify(o),'application/json')};
+  ex.onclick=async()=>{SV('pt_lastbk',Date.now());avisoResp();const o={};Object.keys(localStorage).filter(k=>k.startsWith('pt_')).forEach(k=>o[k]=localStorage.getItem(k));try{o._fotos=await fAll()}catch{}dl('respaldo_puritronic_'+ymd(new Date())+'.json',JSON.stringify(o),'application/json')};
   const im=E('input');im.type='file';im.accept='application/json,.json';im.style.marginTop='8px';
   im.onchange=()=>{const f=im.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const o=JSON.parse(rd.result);const ks=Object.keys(o).filter(k=>k.startsWith('pt_')&&typeof o[k]==='string');
-    if(!ks.length)throw 0;if(confirm('Se reemplazarán los datos actuales con el respaldo ('+ks.length+' claves). ¿Continuar?')){ks.forEach(k=>{JSON.parse(o[k]);localStorage.setItem(k,o[k])});(async()=>{try{for(const p of o._fotos||[])await fPut(p)}catch{}location.reload()})()}}catch{toast('Archivo de respaldo no válido')}};rd.readAsText(f)};
+    if(!ks.length)throw 0;ks.forEach(k=>JSON.parse(o[k]));if(confirm('Se reemplazarán los datos actuales con el respaldo ('+ks.length+' claves). ¿Continuar?')){ks.forEach(k=>{JSON.parse(o[k]);localStorage.setItem(k,o[k])});(async()=>{try{for(const p of o._fotos||[])await fPut(p)}catch{}location.reload()})()}}catch{toast('Archivo de respaldo no válido')}};rd.readAsText(f)};
   const rs=E('button','btn r','Restablecer configuración de fábrica');
   rs.onclick=()=>{if(confirm('Se restaura la configuración (precios, secciones, tareas). Las ventas y registros guardados NO se borran. ¿Continuar?')){cfg=DEF();act='ventas';sv();rebuild()}};
   c.append(ex,E('label',0,'Importar respaldo'),im,rs);
@@ -714,29 +719,62 @@ $('#qok').onclick=()=>{
   const its=qItems();if(!its.length)return;
   if(qMode==='x'&&its.some(p=>p.main)&&!(qPrecio({main:1},1)>0)){toast('Escribe un precio válido');return}
   if(its.some(p=>!p.main&&!(+p.p>0))){toast('Un producto no tiene precio. Ponlo en Ajustes');return}
-  const d=new Date(),a=ventas(),cl=$('#cliente').value.trim();let tot=0,gar=0,first=true;const tt=its.reduce((s,p)=>s+qPrecio(p,qC[p.id])*qC[p.id],0),tip=esEf(qPay)?0:Math.round(tt*qTip)/100;
+  const d=new Date(),a=ventas(),cl=ckn($('#cliente').value.trim()),tk=Date.now()+'t'+Math.floor(Math.random()*1000);let tot=0,gar=0,first=true;const tt=its.reduce((s,p)=>s+qPrecio(p,qC[p.id])*qC[p.id],0),tip=esEf(qPay)?0:Math.round(tt*qTip)/100;
   its.forEach(p=>{const n=qC[p.id],pu=qPrecio(p,n),t=Math.round(pu*n*100)/100;tot+=t;if(p.id==='g')gar+=n;
-    a.push({id:Date.now()+''+Math.floor(Math.random()*1000)+p.id,fecha:ymd(d),hora:pad(d.getHours())+':'+pad(d.getMinutes()),qty:n,pu,tar:p.main?qTar(n):'',pr:p.id,pn:p.main?'':p.n,total:t,pago:qPay,prop:first?tip:0,com:conCom(qPay)?comisionDe(t,n,!p.main||qMode==='x'):0});first=false});
+    a.push({id:Date.now()+''+Math.floor(Math.random()*1000)+p.id,fecha:ymd(d),hora:pad(d.getHours())+':'+pad(d.getMinutes()),qty:n,pu,tar:p.main?qTar(n):'',pr:p.id,pn:p.main?'':p.n,total:t,pago:qPay,prop:first?tip:0,com:conCom(qPay)?comisionDe(t,n,!p.main||qMode==='x'):0,tk,cl});first=false});
   if(SV('pt_ventas',a)){
-    if(cl&&gar){const c=cards();c[cl]=(c[cl]||0)+gar;SV('pt_cards',c)}
+    if(cl){const c=cards();c[cl]=(c[cl]||0)+gar;SV('pt_cards',c)}
     Object.keys(qC).forEach(k=>delete qC[k]);qMode='auto';qTip=0;$('#qx').value='';$('#cliente').value='';$('#vd').value=ymd(d);vib([20,40,20]);toast('✓ Venta registrada: '+mx(tot)+(cl&&gar?' · +'+gar+' sello(s) a '+cl:''));pintaVentas();pintaCard()}
 };
-const cards=()=>LS('pt_cards',{});const META=()=>Math.max(1,parseInt(cfg.metaCard)||10);
+const cards=()=>NO(LS('pt_cards',{}));const ckn=nm=>nm&&(Object.keys(cards()).find(k=>k.toLowerCase()===nm.toLowerCase())||nm);const META=()=>Math.max(1,parseInt(cfg.metaCard)||10);
 function pintaCard(){
-  const m=META(),c=cards(),nm=$('#cliente').value.trim(),n=c[nm]||0;
+  const m=META(),c=cards(),nm=ckn($('#cliente').value.trim()),n=c[nm]||0;
   $('#meta').value=m;$('#clientes').textContent='';Object.keys(c).forEach(k=>{const o=E('option');o.value=k;$('#clientes').append(o)});
   const S=$('#sellos');S.textContent='';for(let i=0;i<m;i++)S.append(E('span',i<n?'on':'','⭐'));
   $('#sello').disabled=!nm;$('#canje').disabled=!(nm&&n>=m);$('#canje').textContent=n>=m&&nm?'🎁 Canjear garrafón gratis':'Canjear gratis ('+Math.min(n,m)+'/'+m+')';
 }
 $('#cliente').oninput=pintaCard;
 $('#meta').onchange=()=>{cfg.metaCard=Math.max(1,parseInt($('#meta').value)||10);sv();pintaCard()};
-$('#sello').onclick=()=>{const nm=$('#cliente').value.trim();if(!nm)return;const c=cards();c[nm]=(c[nm]||0)+1;SV('pt_cards',c);pintaCard()};
-$('#canje').onclick=()=>{const nm=$('#cliente').value.trim(),c=cards();if(!nm||(c[nm]||0)<META())return;
-  const d=new Date(),a=ventas();a.push({id:Date.now()+'g'+Math.floor(Math.random()*1000),fecha:ymd(d),hora:pad(d.getHours())+':'+pad(d.getMinutes()),qty:1,pu:0,tar:'Garrafón gratis (tarjeta)',pr:'g',pn:'',total:0,pago:'Tarjeta cliente',prop:0,com:0});
+$('#sello').onclick=()=>{const nm=ckn($('#cliente').value.trim());if(!nm)return;const c=cards();c[nm]=(c[nm]||0)+1;SV('pt_cards',c);pintaCard()};
+$('#canje').onclick=()=>{const nm=ckn($('#cliente').value.trim()),c=cards();if(!nm||(c[nm]||0)<META())return;
+  const d=new Date(),a=ventas();a.push({id:Date.now()+'g'+Math.floor(Math.random()*1000),fecha:ymd(d),hora:pad(d.getHours())+':'+pad(d.getMinutes()),qty:1,pu:0,tar:'Garrafón gratis (tarjeta)',pr:'g',pn:'',total:0,pago:'Tarjeta cliente',prop:0,com:0,cl:nm});
   if(SV('pt_ventas',a)){c[nm]-=META();SV('pt_cards',c);$('#vd').value=ymd(d);toast('🎁 Garrafón gratis entregado a '+nm);pintaVentas();pintaCard()}};
-const _pv=pintaVentas;pintaVentas=function(){_pv();pintaQuick()};
+const _pv=pintaVentas;pintaVentas=function(){_pv();pintaQuick();pintaMeta();avisoResp()};
 const _rb=rebuild;rebuild=function(){_rb();pintaQuick();pintaCard()};
-pintaQuick();pintaCard();
+
+/* ===== v6: iconos de venta ===== */
+const dias=u=>u?Math.round((new Date(ymd(new Date())+'T12:00')-new Date(u+'T12:00'))/864e5):999;
+function ticketTxt(G){const f=G[0],tt=G.reduce((s,x)=>s+x.total,0),cm=G.reduce((s,x)=>s+(x.com||0),0),pr=G.reduce((s,x)=>s+(x.prop||0),0);
+  return '🧾 '+cfg.neg+'\n'+f.fecha+' '+f.hora+'\n'+G.map(x=>'• '+nomV(x)+' — '+mx(x.total)).join('\n')+(cm?'\nComisión: '+mx(cm):'')+(pr?'\nPropina: '+mx(pr):'')+'\nTotal: '+mx(tt+cm+pr)+' ('+pagoN(f.pago)+')\n¡Gracias por tu compra! 💧'}
+async function compartir(t){try{if(navigator.share){await navigator.share({text:t});return}}catch(e){if(e&&e.name==='AbortError')return}window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank')}
+function repetir(){const a=ventas().filter(x=>x.pago!=='Tarjeta cliente').sort((x,y)=>y.id.localeCompare(x.id)),lv=a[0];
+  if(!lv){toast('Aún no hay ventas para repetir');return}
+  const G=lv.tk?a.filter(x=>x.tk===lv.tk):[lv];Object.keys(qC).forEach(k=>delete qC[k]);
+  G.forEach(x=>{const k=x.pr||'g';qC[k]=(qC[k]||0)+x.qty});
+  if(cfg.pagos.some(m=>m.id===lv.pago))qPay=lv.pago;if(lv.cl)$('#cliente').value=lv.cl;qMode='auto';pintaQuick();pintaCard();toast('🔁 Última venta cargada. Toca Listo')}
+function promocionar(){const L=promosHoy().map(x=>'🔥 '+x.n+': '+cfg.prodP+' a '+mx(x.p)+' c/u'+(x.min>1?' (desde '+x.min+')':'')).join('\n');
+  compartir('💧 '+cfg.neg+' · Agua purificada\n'+(L||cap1(cfg.prod)+' a '+mx(cfg.base))+'\n¡Pide el tuyo hoy! 🚚')}
+function clientes(){
+  const c=cards(),tel=NO(LS('pt_tel',{})),info=NO({});
+  ventas().filter(x=>x.cl).forEach(x=>{const i=info[x.cl]||(info[x.cl]={t:0,u:''});i.t+=x.total;if(x.fecha>i.u)i.u=x.fecha});
+  Object.keys(c).forEach(k=>{if(!info[k])info[k]={t:0,u:''}});
+  const ks=Object.keys(info).sort((a,b)=>dias(info[b].u)-dias(info[a].u)),d=$('#dlg');d.textContent='';d.append(E('h2',0,'👥 Clientes ('+ks.length+')'));
+  if(!ks.length)d.append(E('div','empty','Escribe el cliente al vender y aquí verás quién lleva días sin comprar.'));
+  ks.forEach(k=>{const i=info[k],dd=dias(i.u),r=E('div','li'),t=E('div');
+    t.append(E('b',0,k),E('small',dd>=7&&dd<999?'warn':0,'⭐ '+(c[k]||0)+'/'+META()+' · '+mx(i.t)+' · '+(i.u?(dd?'hace '+dd+' d':'hoy'):'sin compras')));
+    r.append(t,ib('💬',()=>{let n=tel[k];if(!n){n=(prompt('WhatsApp de '+k+' (10 dígitos)')||'').replace(/\D/g,'');if(n.length<10)return;tel[k]=n;SV('pt_tel',tel)}
+      const g=c[k]||0;window.open('https://wa.me/'+(n.length===10?'52'+n:n)+'?text='+encodeURIComponent('Hola '+k+', te escribe '+cfg.neg+' 💧. '+(g>=META()?'¡Tienes un '+cfg.prod+' GRATIS esperándote! 🎁':'Llevas '+g+' de '+META()+' sellos.')+' ¿Te llevamos agua hoy?'),'_blank')},'WhatsApp'));d.append(r)});
+  const x=E('button','btn s','Cerrar');x.type='button';x.onclick=()=>d.close();d.append(x);d.showModal()}
+let metaHit=null;
+function pintaMeta(){const m=+cfg.metaDia||0,t=ventas().filter(v=>v.fecha===ymd(new Date())).reduce((s,v)=>s+v.total,0),p=m?Math.min(100,Math.round(t/m*100)):0;
+  $('#metaF').style.width=p+'%';$('#metaT').textContent=m?'🎯 Meta del día: '+mx(t)+' de '+mx(m)+' ('+p+'%)':'🎯 Toca "Meta" para fijar tu venta diaria objetivo';
+  const ok=m>0&&t>=m;if(metaHit===false&&ok)setTimeout(()=>toast('🎉 ¡Meta del día lograda!'),1800);metaHit=ok}
+function avisoResp(){$('#bkw').style.display=ventas().length&&Date.now()-LS('pt_lastbk',0)>7*864e5?'block':'none'}
+$('#aRep').onclick=repetir;$('#aCli').onclick=clientes;$('#aPro').onclick=promocionar;
+$('#aMeta').onclick=()=>modal('🎯 Meta del día',[{k:'m',l:'Meta de venta diaria (MXN). 0 = sin meta',t:'number',v:cfg.metaDia||''}],o=>{cfg.metaDia=Math.max(0,parseFloat(o.m)||0);sv();metaHit=null;pintaMeta()});
+$('#bkw').onclick=()=>show('cfg');
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch{}
+pintaQuick();pintaCard();pintaMeta();avisoResp();
 </script>
 </body>
 </html>
