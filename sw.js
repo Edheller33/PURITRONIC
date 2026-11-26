@@ -1,7 +1,7 @@
 /* PURITRONIC - Service Worker (offline first, v8)
    Importante: este archivo SOLO guarda los archivos de la app (HTML, íconos) para que abra sin internet.
    Los datos del negocio (ventas, cortes, clientes) viven en localStorage e IndexedDB del navegador, no aquí. */
-const CACHE = 'puritronic-v8';
+const CACHE = 'puritronic-v9';
 const CORE = ['./', './index.html'];                       /* sin esto la app no abre offline */
 const EXTRA = ['./manifest.webmanifest', './icon-192.png', './icon-512.png']; /* si falta alguno, NO se rompe la instalación */
 const NAV_TIMEOUT = 4000;
